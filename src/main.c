@@ -1,17 +1,25 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/socket.h>
-#include <stdbool.h>
 #include <unistd.h>
+#include <string.h>
+
+#include <signal.h>
 
 #include "../headers/network_utils.h"
 #include "../headers/request.h"
 
+int accepting = 1;
+
+void stop(int si) {
+    accepting = 0;
+}
 
 int main(void) {
+    signal(SIGINT, stop);
+
     int listener = get_listening_sock_or_die("3000");
     
-    bool accepting = true;
     while (accepting) {
         struct sockaddr new_addr;
         socklen_t addr_len = sizeof new_addr;
@@ -39,18 +47,12 @@ int main(void) {
         printf("received %d bytes from socket %d msg is: \n", bytes, new_con);
         printf("%s\n", r_msg);
 
-        char * verb = parse_verb(r_msg);
-        
-        printf("the http verb of the request is : %s\n", verb);
-        free(verb);
-
-        HeaderList * headers = parse_headers(r_msg);
-
-        print_headers(headers);
-
         Request * r = malloc(sizeof(Request));
-        r->headers = headers;
+        r->method = parse_verb(r_msg);
+        r->headers = parse_headers(r_msg);
+        r->content_string = parse_content_string(r, r_msg);
 
+        print_request(r);
         free_request(r);
     }
 }

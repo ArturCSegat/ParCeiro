@@ -81,19 +81,57 @@ HeaderList * parse_headers(const char * http_string) {
     return headers;
 }
 
-void print_headers(HeaderList * hl) {
-        printf("Headers\n");
-    for (int i = 0; i < hl->len; i++) {
-        printf("%s: %s\n", hl->arr[i].name, hl->arr[i].value);
+int get_header_idx(Request * r, const char * name) {
+    for (int i = 0; i < r->headers->len; i++) {
+        if (strcmp(r->headers->arr[i].name, name) == 0) {
+            return i;
+        }
     }
+    return -1;
+}
+
+char * parse_content_string(Request * r, const char * http_string){
+    int idx = 0;
+    for(;http_string[idx] + http_string[idx+1] + http_string[idx+2] != '\n' + '\r' * 2; idx++);
+    for (; http_string[idx] == '\n' || http_string[idx]=='\r'; idx ++);
+    
+    int c_len_i = get_header_idx(r, "Content-Length");
+    if (c_len_i == -1) return "\0";
+    
+    int size = atoi(r->headers->arr[c_len_i].value);
+
+    char * content_buffer = malloc(size+1);
+
+    int i = 0;
+    for (; i < size; i++) {
+        content_buffer[i] = http_string[idx];
+        idx += 1;
+    }
+    content_buffer[size] = 0;
+    
+    return content_buffer;
+}
+
+void print_request(Request * r) {
+    printf("Method: %s\n", r->method);
+    printf("Headers: { ");
+    for (int i = 0; i < r->headers->len; i++) {
+        printf("%s: %s, ", r->headers->arr[i].name, r->headers->arr[i].value);
+    }
+    printf("}\n");
+    printf("Content: %s\n", r->content_string);
 }
 
 Request * build_request(const char * http_string);
+
 void free_request(Request * r) {
+    free((char*)r->method);
     for (int i = 0; i < r->headers->len; i++) {
         free((char*)r->headers->arr[i].name);
         free((char*)r->headers->arr[i].value);
     }
     free(r->headers->arr);
     free(r->headers);
+    free(r->content_string);
+    free(r);
 }
