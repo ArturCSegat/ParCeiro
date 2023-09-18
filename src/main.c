@@ -43,10 +43,6 @@ int main(void) {
             close(new_con);
             continue;
         }
-
-        printf("received %d bytes from socket %d msg is: \n", bytes, new_con);
-        printf("%s\n", r_msg);
-
         Request * r = malloc(sizeof(Request));
         r->method = parse_verb(r_msg);
         r->headers = parse_headers(r_msg);
