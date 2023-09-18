@@ -100,14 +100,14 @@ char * parse_content_string(Request * r, const char * http_string){
     
     int size = atoi(r->headers->arr[c_len_i].value);
 
-    char * content_buffer = malloc(size+1);
+    char * content_buffer = malloc(size);
 
     int i = 0;
     for (; i < size; i++) {
         content_buffer[i] = http_string[idx];
         idx += 1;
     }
-    content_buffer[size] = 0;
+    content_buffer[size+1] = 0;
     
     return content_buffer;
 }
@@ -132,6 +132,8 @@ void free_request(Request * r) {
     }
     free(r->headers->arr);
     free(r->headers);
-    free(r->content_string);
+    if (r->content_string[0] != '\0') {
+        free(r->content_string);
+    }
     free(r);
 }
