@@ -43,12 +43,29 @@ int main(void) {
             close(new_con);
             continue;
         }
+        
+        if (validate_http_string(r_msg) != 0) {
+            printf("bad request happened\n");
+            printf("err: %d\n", validate_http_string(r_msg));
+            printf("\n\nfull raw message: %s", r_msg);
+            printf("end of message\n");
+            continue;
+        }
+    
         Request * r = malloc(sizeof(Request));
         r->method = parse_verb(r_msg);
         r->headers = parse_headers(r_msg);
-        r->content_string = parse_content_string(r, r_msg);
+        
+        int c_len = get_header_idx(r, "Content-Length");
+        if (c_len == -1) {
+            r->content_string = "\0";
+        } else {
+            r->content_string = parse_content_string(r_msg, atoi(r->headers->arr[c_len].value));
+        }
 
         print_request(r);
         free_request(r);
+
+        printf("\n\nfull raw message: %s\n", r_msg);
     }
 }

@@ -30,8 +30,10 @@ char * parse_verb(const char * http_r_string) {
 }
 
 HeaderList * parse_headers(const char * http_string) {
+    int len = strlen(http_string);
+
     int idx = 0;
-    while(http_string[idx] != '\n') idx += 1;
+    while(http_string[idx] != '\n' && idx < len) idx += 1;
     
     HeaderList * headers = malloc(sizeof(HeaderList));
     headers->arr = malloc(sizeof(struct header) * 5);
@@ -40,10 +42,15 @@ HeaderList * parse_headers(const char * http_string) {
 
     while(http_string[idx] + http_string[idx+1] + http_string[idx+2] != '\n' + '\r' * 2) {
         for (; http_string[idx] == '\n' || http_string[idx]=='\r'; idx ++);
+
         char * h_name = malloc(40);
         int n_cap = 40;
         int n_count = 0;
-        for (; http_string[idx] != ':'; idx++) {
+        char * h_val = malloc(40);
+        int v_cap = 40;
+        int v_count = 0;
+
+        for (; http_string[idx] != ':' && idx < len; idx++) {
             if (n_count == n_cap) {
                 n_cap *= 2;
                 h_name = realloc(h_name, n_cap);
@@ -51,11 +58,14 @@ HeaderList * parse_headers(const char * http_string) {
             h_name[n_count] = http_string[idx];
             n_count += 1;
         }
+        if (idx == len) {
+            free(h_name);
+            free(h_val);
+            return headers;
+        }
+
         h_name[n_count] = 0;
 
-        char * h_val = malloc(40);
-        int v_cap = 40;
-        int v_count = 0;
         for (idx += 2; http_string[idx] != '\r'; idx++) {
             if (v_count == v_cap) {
                 v_cap *= 2;
@@ -90,24 +100,19 @@ int get_header_idx(Request * r, const char * name) {
     return -1;
 }
 
-char * parse_content_string(Request * r, const char * http_string){
+char * parse_content_string(const char * http_string, int cont_len){
     int idx = 0;
     for(;http_string[idx] + http_string[idx+1] + http_string[idx+2] != '\n' + '\r' * 2; idx++);
     for (; http_string[idx] == '\n' || http_string[idx]=='\r'; idx ++);
     
-    int c_len_i = get_header_idx(r, "Content-Length");
-    if (c_len_i == -1) return "\0";
-    
-    int size = atoi(r->headers->arr[c_len_i].value);
-
-    char * content_buffer = malloc(size);
+    char * content_buffer = malloc(cont_len+1);
 
     int i = 0;
-    for (; i < size; i++) {
+    for (; i < cont_len; i++) {
         content_buffer[i] = http_string[idx];
         idx += 1;
     }
-    content_buffer[size+1] = 0;
+    content_buffer[cont_len] = 0;
     
     return content_buffer;
 }
@@ -136,4 +141,33 @@ void free_request(Request * r) {
         free(r->content_string);
     }
     free(r);
+}
+
+int validate_http_string(const char * http_string) {
+    int len = strlen(http_string);
+
+    if (len < 12) return -1;
+    
+    
+    char * uri_start = strchr(http_string, ' ');
+
+    if (uri_start == NULL) return -3;
+    uri_start += 1;
+    char * uri_end = strchr(uri_start, ' ');
+
+    if (uri_end == NULL || uri_end == uri_start) return -4;
+    char * version_start = strchr(uri_end, 'H');
+    if (version_start == NULL || version_start == uri_end) return -5;
+    char * version_end = strchr(version_start, '/');
+    if (version_end == NULL || version_start == version_end) return -6;
+
+    if (strncmp(version_start, "HTTP", 4) != 0) return -7;
+    
+    char * s_r = strchr(version_end, '\r');
+    if (s_r == NULL) return -2;
+    
+    char * s_n = strchr(version_end, '\n');
+    if (s_n == NULL) return -8;
+
+    return 0;
 }
