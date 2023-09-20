@@ -21,6 +21,7 @@ int main(void) {
     int listener = get_listening_sock_or_die("3000");
     
     while (accepting) {
+        printf("\n\n new \n\n");
         struct sockaddr new_addr;
         socklen_t addr_len = sizeof new_addr;
         int new_con;
@@ -37,35 +38,31 @@ int main(void) {
         if (bytes < 0) {
             perror("error receiving");
             close(new_con);
+            memset(r_msg, 0, sizeof strlen(r_msg));
             continue;
         } else if (bytes == 0) {
             printf("no bytes received\n");
             close(new_con);
+            memset(r_msg, 0, sizeof strlen(r_msg));
             continue;
         }
-        
+        r_msg[bytes] = '\0';       
         if (validate_http_string(r_msg) != 0) {
             printf("bad request happened\n");
             printf("err: %d\n", validate_http_string(r_msg));
             printf("\n\nfull raw message: %s", r_msg);
             printf("end of message\n");
+            memset(r_msg, 0, sizeof strlen(r_msg));
             continue;
         }
-    
-        Request * r = malloc(sizeof(Request));
-        r->method = parse_verb(r_msg);
-        r->headers = parse_headers(r_msg);
         
-        int c_len = get_header_idx(r, "Content-Length");
-        if (c_len == -1) {
-            r->content_string = "\0";
-        } else {
-            r->content_string = parse_content_string(r_msg, atoi(r->headers->arr[c_len].value));
-        }
-
+        Request * r = build_request(r_msg);
+        
         print_request(r);
         free_request(r);
 
         printf("\n\nfull raw message: %s\n", r_msg);
+
+        memset(r_msg, 0, sizeof strlen(r_msg));
     }
 }
