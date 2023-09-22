@@ -15,9 +15,23 @@ char * parse_verb(char ** http_r_string) {
     }
     verb[i+1] = 0;
     
-    *http_r_string = strchr(*http_r_string, '\n');
     *http_r_string += 1;
     return verb;
+}
+
+char * parse_uri(char ** http_r_stirng) {
+    char * uri_buff = malloc(40);
+    
+    int offset = 0;
+    for(; **http_r_stirng != ' '; *http_r_stirng += 1) {
+        uri_buff[offset] = **http_r_stirng;
+        offset += 1;
+    }
+    uri_buff[offset+1] = 0;
+
+    *http_r_stirng = strchr(*http_r_stirng, '\n');
+    *http_r_stirng += 1;
+    return uri_buff;
 }
 
 HeaderList * parse_headers(char ** http_string) {
@@ -111,6 +125,7 @@ char * parse_content_string(char ** http_string, int cont_len){
 
 void print_request(Request * r) {
     printf("Method: %s\n", r->method);
+    printf("URI: %s\n", r->uri);
     printf("Headers: { ");
     for (int i = 0; i < r->headers->len; i++) {
         printf("%s: %s, ", r->headers->arr[i].name, r->headers->arr[i].value);
@@ -167,8 +182,7 @@ int validate_http_string(const char * http_string) {
 Request * build_request(char * http_string) {
         Request * r = malloc(sizeof(Request));
         r->method = parse_verb(&http_string);
-        printf("parsed verb: %s\n", r->method);
-        printf("current: %s\n", http_string);
+        r->uri = parse_uri(&http_string);
         r->headers = parse_headers(&http_string);
         
         int c_len = get_header_idx(r, "content-length");
