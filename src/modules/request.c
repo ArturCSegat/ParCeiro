@@ -1,20 +1,9 @@
 #include <stdlib.h>
 #include <stdio.h>
-#include "../../headers/request.h"
 #include <string.h>
 #include <ctype.h>
 
-// example request:
-
-// POST /new-user HTTP/1.1\r\n
-// Host: localhost:3000\r\n                                      
-// User-Agent: curl/7.81.0\r\n
-// Accept: */*\r\n                                      
-// Content-Type: application/json\r\n
-// Content-Length: 44\r\n
-// \r\n
-// {"name":"your name","phonenumber":"111-111"}\r\n
-
+#include "../../headers/request.h"
 
 // extracts the verb from an http request in string form
 char * parse_verb(char ** http_r_string) {
