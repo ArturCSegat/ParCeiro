@@ -14,15 +14,15 @@ int hash_into_idx(char * key, int key_len, int cap) {
     return sum % cap;
 }
 
-// void print_map(Map * m) {
-//     for (int i = 0; i < m->bucket_count; i++) {
-//         printf("Bucket %d [", i);
-//         for (int j = 0; j < m->buckets[i]->len; j++) {
-//             printf("{k: %s, v: %d, l: %d}, ", m->buckets[i]->pairs[j].key, m->buckets[i]->pairs[j].value, m->buckets[i]->pairs[j].key_len);
-//         }
-//         printf("], len: %d\n", m->buckets[i]->len);
-//     }
-// }
+void describe_endpoints(RoutingMap * m) {
+    for (int i = 0; i < m->bucket_count; i++) {
+        printf("Bucket %d [", i);
+        for (int j = 0; j < m->buckets[i]->len; j++) {
+            printf("{k: %s, l: %d}, ", m->buckets[i]->pairs[j].endpoint_uri, m->buckets[i]->pairs[j].key_len);
+        }
+        printf("], len: %d\n", m->buckets[i]->len);
+    }
+}
 
 void handle_uri(RoutingMap * m, char * uri, void(*handler), int uri_len) {
     int b_idx = hash_into_idx(uri, uri_len, m->bucket_count);

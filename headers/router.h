@@ -8,7 +8,7 @@ typedef struct {
     RoutingMap * endpoint_map;   
 }Router;
 
-void listen_on(Router * r, const char * port);
+void listen_on(Router * r);
 
-Router * new_router();
+Router * new_router(const char * port);
 #endif

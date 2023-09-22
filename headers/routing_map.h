@@ -29,4 +29,5 @@ KeyPair * get_handler(RoutingMap * m, char * uri, int uri_len);
 RoutingMap * new_map();
 
 void free_map(RoutingMap * m);
+void describe_endpoints(RoutingMap * m);
 #endif

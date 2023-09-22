@@ -9,20 +9,17 @@
 #include "../../headers/network_utils.h"
 #include "../../headers/routing_map.h"
 
-void listen_on(Router *r, const char * port) {
-    r->tpc_port = port;
-    r->router_fd = get_listening_sock_or_die(port);
-    r->endpoint_map = new_map();
-
+void listen_on(Router * router) {
     int accepting = 1;
 
     while (accepting) {
         printf("\n\n new \n\n");
+        
         struct sockaddr new_addr;
         socklen_t addr_len = sizeof new_addr;
         int new_con;
 
-        if ((new_con = accept(r->router_fd, &new_addr, &addr_len)) == -1) {
+        if ((new_con = accept(router->router_fd, &new_addr, &addr_len)) == -1) {
             perror("failed to accept");
             continue;
         }
@@ -55,14 +52,26 @@ void listen_on(Router *r, const char * port) {
         Request * r = build_request(r_msg);
 
         print_request(r);
+
+        printf("\n\n");
+        printf("hash: %d len: %d\n", hash_into_idx((char*)r->uri, strlen(r->uri), router->endpoint_map->bucket_count), (int)strlen(r->uri));
+        KeyPair * kp = get_handler(router->endpoint_map, (char*)r->uri, strlen(r->uri));
+        
+        if (kp == NULL) {
+            printf("404");
+        } else {
+            kp->endpoint_handler(r);
+        }
+
         free_request(r);
-
-        printf("\n\nfull raw message: %s\n", r_msg);
-
         memset(r_msg, 0, sizeof strlen(r_msg));
     }
 }
 
-Router * new_router(){
-    return malloc(sizeof(Router));
+Router * new_router(const char * port){
+    Router * router  = malloc(sizeof(Router));
+    router->tpc_port = port;
+    router->router_fd = get_listening_sock_or_die(port);
+    router->endpoint_map = new_map();
+    return router;
 }

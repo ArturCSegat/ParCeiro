@@ -27,7 +27,7 @@ char * parse_uri(char ** http_r_stirng) {
         uri_buff[offset] = **http_r_stirng;
         offset += 1;
     }
-    uri_buff[offset+1] = 0;
+    uri_buff[offset] = 0;
 
     *http_r_stirng = strchr(*http_r_stirng, '\n');
     *http_r_stirng += 1;
@@ -110,11 +110,11 @@ char * parse_content_string(char ** http_string, int cont_len){
     char * content_buffer = malloc(cont_len+1);
 
     int i = 0;
-    for (; i < cont_len && **http_string != '\r'; i++) {
+    for (; i < cont_len && **http_string != '\r'; *http_string += 1) {
         content_buffer[i] = **http_string;
-        *http_string += 1;
+        i += 1;
     }
-    content_buffer[cont_len] = 0;
+    content_buffer[i] = 0;
     if (i != cont_len) {
         free(content_buffer);
         return "\0";
@@ -137,6 +137,7 @@ void print_request(Request * r) {
 
 void free_request(Request * r) {
     free((char*)r->method);
+    free((char*)r->uri);
     for (int i = 0; i < r->headers->len; i++) {
         free((char*)r->headers->arr[i].name);
         free((char*)r->headers->arr[i].value);
